@@ -1,0 +1,20 @@
+﻿<script src="~/Scripts/jquery-3.6.0.min.js"></script>
+
+<script type="text/javascript">
+    //log off from session
+    $(document).ready(function () {
+
+        sessionStorage.removeItem('accessToken')
+        localStorage.removeItem('accessToken')
+
+        foreach(string key in Request.Cookies.AllKeys)
+        {
+            HttpCookie cookie = new HttpCookie(key);
+            cookie.Expires = DateTime.UtcNow.AddDays(-7);
+            Response.Cookies.Add(cookie);
+        }
+
+        window.location.href = '@HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority)';
+
+    });
+</script>

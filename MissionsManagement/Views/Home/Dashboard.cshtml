@@ -1,0 +1,288 @@
+﻿
+
+<title>@ViewBag.Title</title>
+
+<link rel="stylesheet" href="~/Content/Dashboard.css">
+    
+<div class="container_form">
+    <h1>Missions</h1>
+    <p>In this section you can add missions and customise them</p>
+        
+    <table id="missionSubmit" class="display" style="width:100%">
+
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>StartingDate</th>
+                <th>EndingDate</th>
+                <th>Responsibility User</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><input type="text" id="row-title" name="row-title"/></td>
+                <td><input type="text" id="row-description" name="row-description"/></td>
+                <td>
+                    <select size="1" id="row-priority" name="row-priority">
+                        <option value="Low" selected="selected">
+                            Low
+                        </option>
+                        <option value="Medium">
+                            Medium
+                        </option>
+                        <option value="High">
+                            High
+                        </option>
+                    </select>
+                </td>
+                <td>
+                    <select size="1" id="row-status" name="row-status">
+                        <option value="In Progress" selected="selected">
+                            In Progress
+                        </option>
+                        <option value="Pending">
+                            Pending
+                        </option>
+                        <option value="Done">
+                            Done
+                        </option>
+                        <option value="Canceled">
+                            Canceled
+                        </option>
+                    </select>
+
+                </td>
+                <td>
+                    <input type="date" id="row-startingDate" name="trip-start"
+                            value="2021-12-12"
+                            min="2021-01-01" max="2021-12-31"/>
+                </td>
+                <td>
+                    <input type="date" id="row-endingDate" name="trip-start"
+                            value="2021-12-12"
+                            min="2021-12-12" max="2021-12-31"/>
+                </td>
+                <td>
+                    <select size="1" id="row-responsibilityUser" onChange="changeUser(this)" name="row-priority">
+                            
+                    </select>
+                </td>
+                <td>
+                    <button onclick="addMissions()">Add Mission</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<div id="missionsContainer" class="container_form">
+</div>
+
+
+
+<script src="~/Scripts/jquery-3.6.0.min.js"></script>
+
+<script type="text/javascript">
+
+    //global variables
+    let choosenUser = ''
+    let missionsCount=0
+    $(document).ready(function () {
+        //get data from dbtables
+        var users = ''
+        var missions=''
+            $.ajax({
+                url: '/api/Missions',
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + sessionStorage.getItem('accessToken')
+                },
+                contentType: 'application/json; charset=utf-8',
+                success: function (response) {
+
+                    //add users to option selection
+                    users = response.users
+                    missions = response.missions
+                    $.each(users, function (i, user) {
+                        $('#row-responsibilityUser').append($('<option>', {
+                            value: user.Id,
+                            text: user.UserName
+                        }));
+                    });
+
+                    if (missions != '') {
+                        missionsCount = missions.length
+                        $('#missionsContainer').append('<hr/>')
+                        $('#missionsContainer').append('<table id="missionListTable" class="displayTable" style="width:100%"></table>')
+                        $('#missionListTable').append(`<thead>
+                                                        <tr>
+                                                            <th>Title <button class="softBtn" onclick="sortTable(0)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>Description <button class="softBtn" onclick="sortTable(1)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>Priority <button class="softBtn" onclick="sortTable(2)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>Status <button class="softBtn" onclick="sortTable(3)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>StartingDate <button class="softBtn" onclick="sortTable(4)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>EndingDate <button class="softBtn" onclick="sortTable(5)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>Responsibility User <button class="softBtn" onclick="sortTable(6)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>Action</th>
+                                                        </tr>
+                                                    </thead>`)
+                        $('#missionListTable').append(`<tbody id=missionTbody></tbody>`)
+
+                        $.each(missions, function (i, mission) {
+                            i=i+1 // missionIds stating from 1
+                            $('#missionTbody').append(`<tr id="missionTr_`+i+`">` +
+                                `<td>` + mission.Title + `</td >` +
+                                `<td>` + mission.Description + `</td >` +
+                                `<td>` + mission.Priority + `</td >` +
+                                `<td>` + mission.Status + `</td >` +
+                                `<td>` + mission.StartingDate + `</td >` +
+                                `<td>` + mission.EndingDate + `</td >` +
+                                `<td>` + mission.ResponsibilityUsername + `</td >` +
+                                `<td>` + `<button class="edit" onClick="editMission(` + mission.MissionId + `)">Edit</button><button class="delete" onClick="deleteMission(` + mission.MissionId +`)">Delete</button>` + `</td >` +
+                                `</tr>`)
+
+                        });
+
+                    }
+                    
+
+                    console.log(users)
+                    console.log(missions)
+
+                },
+                error: function (jqXHR) {
+                    console.log(jqXHR.responseText)
+                }
+            })
+        })
+
+    function changeUser(object) {
+        choosenUser = object.options[object.selectedIndex].text
+    }
+
+    function addMissions() {
+
+        let row_title = document.getElementById("row-title").value
+        let row_description = document.getElementById("row-description").value
+        let row_priority = document.getElementById("row-priority").value
+        let row_status = document.getElementById("row-status").value
+        let row_startingDate = document.getElementById("row-startingDate").value
+        let row_endingDate = document.getElementById("row-endingDate").value
+        let row_responsibilityUser = choosenUser
+        let row_responsibilityUserId = document.getElementById("row-responsibilityUser").value
+        $.ajax({
+            url: '/api/Missions',
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + sessionStorage.getItem('accessToken')
+            },
+            contentType: 'application/json; charset=utf-8',
+            data:
+                JSON.stringify({
+
+                    'Title': row_title,
+                    'Description': row_description,
+                    'Priority': row_priority,
+                    'Status': row_status,
+                    'StartingDate': row_startingDate,
+                    'EndingDate': row_endingDate,
+                    'ResponsibilityUserId': row_responsibilityUserId
+
+                }),
+            success: function (response) {
+
+                console.log(response)
+                var missionTbodyElement = document.getElementById("missionTbody")
+                if (missionTbodyElement != null) {
+                    $('#missionTbody').append(`<tr id="missionTr_` + missionsCount+1 + `">` +
+                        `<td>` + row_title + `</td >` +
+                        `<td>` + row_description + `</td >` +
+                        `<td>` + row_priority + `</td >` +
+                        `<td>` + row_status + `</td >` +
+                        `<td>` + row_startingDate + `</td >` +
+                        `<td>` + row_endingDate + `</td >` +
+                        `<td>` + row_responsibilityUser + `</td >` +
+                        `<td>` + `<button class="edit" onClick="editMission(mission)">Edit</button><button class="delete" onClick="deleteMission(mission)">Delete</button>` + `</td >` +
+                        `</tr>`)
+                }
+                
+
+            },
+            error: function (jqXHR) {
+                console.log(jqXHR.responseText)
+            }
+        })
+
+
+    }
+
+    function deleteMission(missionId) {
+        $.ajax({
+            url: '/api/Missions?'+$.param({
+                "missionId": missionId
+            }),
+            method: 'Delete',
+            headers: {
+                'Authorization': 'Bearer ' + sessionStorage.getItem('accessToken')
+            },
+            contentType: 'application/json; charset=utf-8',
+            success: function (response) {
+
+                
+                document.getElementById('#missionTr_' + missionId).remove();
+                console.log(response)
+            },
+            error: function (jqXHR) {
+                console.log(jqXHR.responseText)
+            }
+        })
+    }
+
+
+    function editMission(mission) {
+
+    }
+
+    //sorting table
+    function sortTable(pos) {
+        var table, rows, switching, i, x, y, shouldSwitch;
+        table = document.getElementById("missionListTable");
+        switching = true;
+        /*Make a loop that will continue until
+        no switching has been done:*/
+        while (switching) {
+            //start by saying: no switching is done:
+            switching = false;
+            rows = table.rows;
+            /*Loop through all table rows (except the
+            first, which contains table headers):*/
+            for (i = 1; i < (rows.length - 1); i++) {
+                //start by saying there should be no switching:
+                shouldSwitch = false;
+                /*Get the two elements you want to compare,
+                one from current row and one from the next:*/
+                x = rows[i].getElementsByTagName("TD")[pos];
+                y = rows[i + 1].getElementsByTagName("TD")[pos];
+                //check if the two rows should switch place:
+                if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                    //if so, mark as a switch and break the loop:
+                    shouldSwitch = true;
+                    break;
+                }
+            }
+            if (shouldSwitch) {
+                /*If a switch has been marked, make the switch
+                and mark that a switch has been done:*/
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+            }
+        }
+    }
+
+</script>
+
+
+

@@ -20,31 +20,6 @@ namespace MissionsManagement.Controllers
                                 
             var context = new MissionsManagementDBEntitiesEntities();
 
-            /*var missions = context.Missions.Select(x=>new
-            {
-                x.MissionId,
-                x.Mission_UserId,
-                x.Title,
-                x.Description,
-                x.Priority,
-                x.Status,
-                x.StartingDate,
-                x.EndingDate,
-                x.ResponsibilityUserId
-            }).ToList();*/
-
-            /*foreach (var mission in missions)
-            {
-                Console.WriteLine(mission);
-                var responsibleUser=mission.ResponsibilityUserId;
-                var responsibleUserFromTable=context.AspNetUsers.Select(x => new
-                {
-                    x.Id,
-                    x.UserName
-                }).Where(f=>f.Id == responsibleUser).FirstOrDefault();
-                
-                
-            }*/
             var missions = context.Missions
             .Join(context.AspNetUsers,
                 m => m.ResponsibilityUserId,

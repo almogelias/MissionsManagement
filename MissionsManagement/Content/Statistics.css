@@ -1,4 +1,6 @@
-﻿
+﻿.container_form_header{
+    width:400px;
+}
 .displayTable {
     border: 1px solid black;
     border-collapse: collapse;

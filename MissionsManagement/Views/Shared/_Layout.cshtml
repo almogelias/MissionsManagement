@@ -16,13 +16,14 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                @Html.ActionLink("Application name", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
+                @Html.ActionLink("Interview", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
             </div>
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav navbar-left">
                     @if (User.Identity.IsAuthenticated)
                     {
                         <li>@Html.ActionLink("Dashboard", "Index", "Home/Dashboard", new { area = "" }, null)</li>
+                        <li>@Html.ActionLink("Statistics", "Index", "Home/Statistics", new { area = "" }, null)</li>
                     }
                     else
                     {
@@ -51,7 +52,7 @@
         @RenderBody()
         <hr />
         <footer>
-            <p>&copy; @DateTime.Now.Year - My ASP.NET Application</p>
+            <p>&copy; @DateTime.Now.Year - Copyrights - Almog Elias</p>
         </footer>
     </div>
 

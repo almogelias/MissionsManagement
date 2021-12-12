@@ -1,0 +1,136 @@
+﻿
+
+<title>@ViewBag.Title</title>
+
+<link rel="stylesheet" href="~/Content/Statistics.css">
+
+<div class="container_form_header">
+    <h1>Statistics</h1>
+    <p>In this section you can see users statistics</p>
+
+    <table id="missionFilter" class="display" style="width:100%">
+
+        <thead>
+            <tr>
+                <th>StartingDate</th>
+                <th>EndingDate</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                
+                <td>
+                    <input type="date" id="row-startingDate" name="trip-start"
+                           value="2021-12-12"
+                           min="2021-01-01" max="2021-12-31" />
+                </td>
+                <td>
+                    <input type="date" id="row-endingDate" name="trip-start"
+                           value="2021-12-12"
+                           min="2021-01-01" max="2021-12-31" />
+                </td>
+                <td>
+                    <button onclick="getStatistics()">Get Statistics</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+
+<div id="missionsContainer" class="container_form">
+</div>
+
+
+
+<script src="~/Scripts/jquery-3.6.0.min.js"></script>
+
+<script type="text/javascript">
+
+    function getStatistics() {
+        $('#missionListTable').remove()
+        //get data statistics from dbtables
+        var startingDate = document.getElementById("row-startingDate").value
+        var endingDate = document.getElementById("row-endingDate").value
+        $.ajax({
+            url: '/api/Missions?' + $.param({
+                "action": "getStatistics",
+                "startingDate": startingDate,
+                "endingDate": endingDate
+            }),
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + sessionStorage.getItem('accessToken')
+            },
+            contentType: 'application/json; charset=utf-8',
+            success: function (response) {
+
+                $('#missionsContainer').append('<table id="missionListTable" class="displayTable" style="width:100%"></table>')
+                $('#missionListTable').append(`<thead>
+                                                        <tr>
+                                                            <th>UserName <button class="softBtn" onclick="sortTable(0)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>Count of Missions completed <button class="softBtn" onclick="sortTable(1)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                        </tr>
+                                                    </thead>`)
+                $('#missionListTable').append(`<tbody id=missionTbody></tbody>`)
+
+                $.each(response, function (i, statistic) {
+                    //i = i + 1 missionIds stating from 1
+                    
+                    $('#missionTbody').append(`<tr id="missionTr_` + statistic.userName + `">` +
+                        `<td>` + statistic.userName + `</td >` +
+                        `<td>` + statistic.Count + `</td >` +
+                        `</tr>`)
+
+                })
+
+
+                console.log(response)
+
+            },
+            error: function (jqXHR) {
+                console.log(jqXHR.responseText)
+            }
+        })
+    }
+
+    //sorting table
+    function sortTable(pos) {
+        var table, rows, switching, i, x, y, shouldSwitch;
+        table = document.getElementById("missionListTable");
+        switching = true;
+        /*Make a loop that will continue until
+        no switching has been done:*/
+        while (switching) {
+            //start by saying: no switching is done:
+            switching = false;
+            rows = table.rows;
+            /*Loop through all table rows (except the
+            first, which contains table headers):*/
+            for (i = 1; i < (rows.length - 1); i++) {
+                //start by saying there should be no switching:
+                shouldSwitch = false;
+                /*Get the two elements you want to compare,
+                one from current row and one from the next:*/
+                x = rows[i].getElementsByTagName("TD")[pos];
+                y = rows[i + 1].getElementsByTagName("TD")[pos];
+                //check if the two rows should switch place:
+                if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                    //if so, mark as a switch and break the loop:
+                    shouldSwitch = true;
+                    break;
+                }
+            }
+            if (shouldSwitch) {
+                /*If a switch has been marked, make the switch
+                and mark that a switch has been done:*/
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+            }
+        }
+    }
+
+</script>
+
+
+

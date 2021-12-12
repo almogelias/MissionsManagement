@@ -64,7 +64,7 @@
                 <td>
                     <input type="date" id="row-endingDate" name="trip-start"
                             value="2021-12-12"
-                            min="2021-12-12" max="2021-12-31"/>
+                            min="2021-11-01" max="2021-12-31"/>
                 </td>
                 <td>
                     <select size="1" id="row-responsibilityUser" onChange="changeUser(this)" name="row-priority">
@@ -78,6 +78,13 @@
         </tbody>
     </table>
 </div>
+<hr/>
+<div id="missionsfilters" class="container_form_filter">
+    <button onclick="openMissions()">Show Open Missions</button>
+    <button onclick="deadlineMissions()">deadline Mission</button>
+    <button onclick="archiveMissions()">Show Archive Mission</button>
+    <button onclick="allMissions()">Show All Mission</button>
+</div>
 <div id="missionsContainer" class="container_form">
 </div>
 
@@ -89,74 +96,10 @@
 
     //global variables
     let choosenUser = ''
-    let missionsCount=0
+    let missionsCount = 0
+    let currentMissionId=0
     $(document).ready(function () {
-        //get data from dbtables
-        var users = ''
-        var missions=''
-            $.ajax({
-                url: '/api/Missions',
-                method: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + sessionStorage.getItem('accessToken')
-                },
-                contentType: 'application/json; charset=utf-8',
-                success: function (response) {
-
-                    //add users to option selection
-                    users = response.users
-                    missions = response.missions
-                    $.each(users, function (i, user) {
-                        $('#row-responsibilityUser').append($('<option>', {
-                            value: user.Id,
-                            text: user.UserName
-                        }));
-                    });
-
-                    if (missions != '') {
-                        missionsCount = missions.length
-                        $('#missionsContainer').append('<hr/>')
-                        $('#missionsContainer').append('<table id="missionListTable" class="displayTable" style="width:100%"></table>')
-                        $('#missionListTable').append(`<thead>
-                                                        <tr>
-                                                            <th>Title <button class="softBtn" onclick="sortTable(0)"><span class="glyphicon glyphicon-sort"></span></button></th>
-                                                            <th>Description <button class="softBtn" onclick="sortTable(1)"><span class="glyphicon glyphicon-sort"></span></button></th>
-                                                            <th>Priority <button class="softBtn" onclick="sortTable(2)"><span class="glyphicon glyphicon-sort"></span></button></th>
-                                                            <th>Status <button class="softBtn" onclick="sortTable(3)"><span class="glyphicon glyphicon-sort"></span></button></th>
-                                                            <th>StartingDate <button class="softBtn" onclick="sortTable(4)"><span class="glyphicon glyphicon-sort"></span></button></th>
-                                                            <th>EndingDate <button class="softBtn" onclick="sortTable(5)"><span class="glyphicon glyphicon-sort"></span></button></th>
-                                                            <th>Responsibility User <button class="softBtn" onclick="sortTable(6)"><span class="glyphicon glyphicon-sort"></span></button></th>
-                                                            <th>Action</th>
-                                                        </tr>
-                                                    </thead>`)
-                        $('#missionListTable').append(`<tbody id=missionTbody></tbody>`)
-
-                        $.each(missions, function (i, mission) {
-                            i=i+1 // missionIds stating from 1
-                            $('#missionTbody').append(`<tr id="missionTr_`+i+`">` +
-                                `<td>` + mission.Title + `</td >` +
-                                `<td>` + mission.Description + `</td >` +
-                                `<td>` + mission.Priority + `</td >` +
-                                `<td>` + mission.Status + `</td >` +
-                                `<td>` + mission.StartingDate + `</td >` +
-                                `<td>` + mission.EndingDate + `</td >` +
-                                `<td>` + mission.ResponsibilityUsername + `</td >` +
-                                `<td>` + `<button class="edit" onClick="editMission(` + mission.MissionId + `)">Edit</button><button class="delete" onClick="deleteMission(` + mission.MissionId +`)">Delete</button>` + `</td >` +
-                                `</tr>`)
-
-                        });
-
-                    }
-                    
-
-                    console.log(users)
-                    console.log(missions)
-
-                },
-                error: function (jqXHR) {
-                    console.log(jqXHR.responseText)
-                }
-            })
+        reload()
         })
 
     function changeUser(object) {
@@ -173,6 +116,7 @@
         let row_endingDate = document.getElementById("row-endingDate").value
         let row_responsibilityUser = choosenUser
         let row_responsibilityUserId = document.getElementById("row-responsibilityUser").value
+        currentMissionId = currentMissionId+1
         $.ajax({
             url: '/api/Missions',
             method: 'POST',
@@ -197,7 +141,7 @@
                 console.log(response)
                 var missionTbodyElement = document.getElementById("missionTbody")
                 if (missionTbodyElement != null) {
-                    $('#missionTbody').append(`<tr id="missionTr_` + missionsCount+1 + `">` +
+                    $('#missionTbody').append(`<tr id="missionTr_` + currentMissionId + `">` +
                         `<td>` + row_title + `</td >` +
                         `<td>` + row_description + `</td >` +
                         `<td>` + row_priority + `</td >` +
@@ -205,7 +149,7 @@
                         `<td>` + row_startingDate + `</td >` +
                         `<td>` + row_endingDate + `</td >` +
                         `<td>` + row_responsibilityUser + `</td >` +
-                        `<td>` + `<button class="edit" onClick="editMission(mission)">Edit</button><button class="delete" onClick="deleteMission(mission)">Delete</button>` + `</td >` +
+                        `<td>` + `<button class="edit" onClick="editMission(` + currentMissionId + `)">Edit</button><button class="delete" onClick="deleteMission(` + currentMissionId +`)">Delete</button>` + `</td >` +
                         `</tr>`)
                 }
                 
@@ -232,7 +176,7 @@
             success: function (response) {
 
                 
-                document.getElementById('#missionTr_' + missionId).remove();
+                document.getElementById('missionTr_' + missionId).remove();
                 console.log(response)
             },
             error: function (jqXHR) {
@@ -241,9 +185,54 @@
         })
     }
 
+    //EditMission function - responsible to edit missionId's mission
+    function editMission(missionId) {
+        let row_title = document.getElementById("row-title").value
+        let row_description = document.getElementById("row-description").value
+        let row_priority = document.getElementById("row-priority").value
+        let row_status = document.getElementById("row-status").value
+        let row_startingDate = document.getElementById("row-startingDate").value
+        let row_endingDate = document.getElementById("row-endingDate").value
+        let row_responsibilityUser = choosenUser
+        let row_responsibilityUserId = document.getElementById("row-responsibilityUser").value
 
-    function editMission(mission) {
+        $.ajax({
+            url: '/api/Missions/' + missionId,
+            method: 'PUT',
+            headers: {
+                'Authorization': 'Bearer ' + sessionStorage.getItem('accessToken')
+            },
+            contentType: 'application/json; charset=utf-8',
+            data:
+                JSON.stringify({
 
+                    'Title': row_title,
+                    'Description': row_description,
+                    'Priority': row_priority,
+                    'Status': row_status,
+                    'StartingDate': row_startingDate,
+                    'EndingDate': row_endingDate,
+                    'ResponsibilityUserId': row_responsibilityUserId
+
+                }),
+            success: function (response) {
+
+
+                let row = document.getElementById('missionTr_' + missionId);
+                row.innerHTML = `<td>` + response.Title + `</td >` +
+                    `<td>` + response.Description + `</td >` +
+                    `<td>` + response.Priority + `</td >` +
+                    `<td>` + response.Status + `</td >` +
+                    `<td>` + response.StartingDate + `</td >` +
+                    `<td>` + response.EndingDate + `</td >` +
+                    `<td>` + row_responsibilityUser + `</td >` +
+                    `<td>` + `<button class="edit" onClick="editMission(` + currentMissionId + `)">Edit</button><button class="delete" onClick="deleteMission(` + currentMissionId + `)">Delete</button>` + `</td >`
+                console.log("Row has been modified!")
+            },
+            error: function (jqXHR) {
+                console.log(jqXHR.responseText)
+            }
+        })
     }
 
     //sorting table
@@ -280,6 +269,216 @@
                 switching = true;
             }
         }
+    }
+
+
+    function openMissions() {
+        
+        var table = document.getElementById("missionTbody").children;
+        //var rowslength = table.children.length
+        var trArr = []; //get all tr element ids
+        var trToDelete = []; //get all tr to delete
+        $("#missionTbody tr").each(function () {
+            trArr.push(this.id);
+        });
+
+
+        for (let tr_id in trArr) {
+            console.log(trArr[tr_id])
+            var status = $("#" + trArr[tr_id] + " td:nth-child(4)").text();
+            if (status == "Done") {
+                console.log("deleting: "+trArr[tr_id])
+                trToDelete.push(table[tr_id].id) // remove Done missions
+            }
+            
+        }
+
+        for (let tr_id_toDelete in trToDelete) {
+            var table = document.getElementById(trToDelete[tr_id_toDelete]).remove();
+        }
+
+        console.log("Done Missions removed!")
+    }
+
+    function archiveMissions() {
+        
+        var table = document.getElementById("missionTbody").children;
+        //var rowslength = table.children.length
+        var trArr = []; //get all tr element ids
+        var trToDelete = []; //get all tr to delete
+        $("#missionTbody tr").each(function () {
+            trArr.push(this.id);
+        });
+
+
+        for (let tr_id in trArr) {
+            console.log(trArr[tr_id])
+            var status = $("#" + trArr[tr_id] + " td:nth-child(4)").text();
+            if (status != "Done") {
+                console.log("deleting: " + trArr[tr_id])
+                trToDelete.push(table[tr_id].id) // remove Done missions
+            }
+
+        }
+
+        for (let tr_id_toDelete in trToDelete) {
+            var table = document.getElementById(trToDelete[tr_id_toDelete]).remove();
+        }
+
+        console.log("Done Missions removed!")
+    }
+
+
+    function deadlineMissions() {
+        $.ajax({
+            url: '/api/Missions?' + $.param({
+                "action": "deadlineMissions"
+            }),
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + sessionStorage.getItem('accessToken')
+            },
+            contentType: 'application/json; charset=utf-8',
+            success: function (response) {
+                console.log(response)
+
+                document.getElementById("missionTbody").remove() //remove oldTable
+                $.each(response, function (i, mission) {
+                    //i = i + 1 missionIds stating from 1
+                    currentMissionId = mission.MissionId
+                    $('#missionListTable').append(`<tbody id=missionTbody></tbody>`)
+                    $('#missionTbody').append(`<tr id="missionTr_` + currentMissionId + `">` +
+                        `<td>` + mission.Title + `</td >` +
+                        `<td>` + mission.Description + `</td >` +
+                        `<td>` + mission.Priority + `</td >` +
+                        `<td>` + mission.Status + `</td >` +
+                        `<td>` + mission.StartingDate + `</td >` +
+                        `<td>` + mission.EndingDate + `</td >` +
+                        `<td>` + mission.ResponsibilityUsername + `</td >` +
+                        `<td>` + `<button class="edit" onClick="editMission(` + currentMissionId + `)">Edit</button><button class="delete" onClick="deleteMission(` + currentMissionId + `)">Delete</button>` + `</td >` +
+                        `</tr>`)
+
+                })
+                
+            },
+            error: function (jqXHR) {
+                console.log(jqXHR.responseText)
+            }
+        })
+    }
+
+    function allMissions() {
+        reload()
+    }
+    //This functions deals with page reload
+    function reload() {
+        //get data from dbtables
+        var users = ''
+        var missions = ''
+        $.ajax({
+            url: '/api/Missions',
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + sessionStorage.getItem('accessToken')
+            },
+            contentType: 'application/json; charset=utf-8',
+            success: function (response) {
+
+                //add users to option selection
+                users = response.users
+                missions = response.missions
+                $.each(users, function (i, user) {
+                    $('#row-responsibilityUser').append($('<option>', {
+                        value: user.Id,
+                        text: user.UserName
+                    }));
+                });
+
+                if (missions != '') {
+                    missionsCount = missions.length
+                    try {
+                        var missionListTable = document.getElementById("missionListTable")
+                        missionListTable.remove()
+                        
+                        $('#missionsContainer').append('<table id="missionListTable" class="displayTable" style="width:100%"></table>')
+                        $('#missionListTable').append(`<thead>
+                                                        <tr>
+                                                            <th>Title <button class="softBtn" onclick="sortTable(0)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>Description <button class="softBtn" onclick="sortTable(1)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>Priority <button class="softBtn" onclick="sortTable(2)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>Status <button class="softBtn" onclick="sortTable(3)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>StartingDate <button class="softBtn" onclick="sortTable(4)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>EndingDate <button class="softBtn" onclick="sortTable(5)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>Responsibility User <button class="softBtn" onclick="sortTable(6)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>Action</th>
+                                                        </tr>
+                                                    </thead>`)
+                        $('#missionListTable').append(`<tbody id=missionTbody></tbody>`)
+
+                        $.each(missions, function (i, mission) {
+                            //i = i + 1 missionIds stating from 1
+                            currentMissionId = mission.MissionId
+                            $('#missionTbody').append(`<tr id="missionTr_` + currentMissionId + `">` +
+                                `<td>` + mission.Title + `</td >` +
+                                `<td>` + mission.Description + `</td >` +
+                                `<td>` + mission.Priority + `</td >` +
+                                `<td>` + mission.Status + `</td >` +
+                                `<td>` + mission.StartingDate + `</td >` +
+                                `<td>` + mission.EndingDate + `</td >` +
+                                `<td>` + mission.ResponsibilityUsername + `</td >` +
+                                `<td>` + `<button class="edit" onClick="editMission(` + currentMissionId + `)">Edit</button><button class="delete" onClick="deleteMission(` + currentMissionId + `)">Delete</button>` + `</td >` +
+                                `</tr>`)
+
+                        })
+                    }
+                    catch { //missionListTable isn't exists
+                        $('#missionsContainer').append('<hr/>')
+                        $('#missionsContainer').append('<table id="missionListTable" class="displayTable" style="width:100%"></table>')
+                        $('#missionListTable').append(`<thead>
+                                                        <tr>
+                                                            <th>Title <button class="softBtn" onclick="sortTable(0)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>Description <button class="softBtn" onclick="sortTable(1)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>Priority <button class="softBtn" onclick="sortTable(2)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>Status <button class="softBtn" onclick="sortTable(3)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>StartingDate <button class="softBtn" onclick="sortTable(4)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>EndingDate <button class="softBtn" onclick="sortTable(5)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>Responsibility User <button class="softBtn" onclick="sortTable(6)"><span class="glyphicon glyphicon-sort"></span></button></th>
+                                                            <th>Action</th>
+                                                        </tr>
+                                                    </thead>`)
+                        $('#missionListTable').append(`<tbody id=missionTbody></tbody>`)
+
+                        $.each(missions, function (i, mission) {
+                            //i = i + 1 missionIds stating from 1
+                            currentMissionId = mission.MissionId
+                            $('#missionTbody').append(`<tr id="missionTr_` + currentMissionId + `">` +
+                                `<td>` + mission.Title + `</td >` +
+                                `<td>` + mission.Description + `</td >` +
+                                `<td>` + mission.Priority + `</td >` +
+                                `<td>` + mission.Status + `</td >` +
+                                `<td>` + mission.StartingDate + `</td >` +
+                                `<td>` + mission.EndingDate + `</td >` +
+                                `<td>` + mission.ResponsibilityUsername + `</td >` +
+                                `<td>` + `<button class="edit" onClick="editMission(` + currentMissionId + `)">Edit</button><button class="delete" onClick="deleteMission(` + currentMissionId + `)">Delete</button>` + `</td >` +
+                                `</tr>`)
+
+                        })
+                    }
+
+                    
+                    
+
+                }
+
+
+                console.log(users)
+                console.log(missions)
+
+            },
+            error: function (jqXHR) {
+                console.log(jqXHR.responseText)
+            }
+        })
     }
 
 </script>

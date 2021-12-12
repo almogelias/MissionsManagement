@@ -43,5 +43,13 @@ namespace MissionsManagement.Controllers
 
             return View();
         }
+
+        [Authorize]
+        public ActionResult Statistics()
+        {
+            ViewBag.Title = "Statistics";
+
+            return View();
+        }
     }
 }
